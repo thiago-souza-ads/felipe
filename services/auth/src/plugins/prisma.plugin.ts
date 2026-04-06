@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify'
 import { PrismaClient } from '@prisma/client'
+import fp from 'fastify-plugin'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -16,4 +17,5 @@ const prismaPlugin: FastifyPluginAsync = async (server: FastifyInstance) => {
   })
 }
 
-export default prismaPlugin
+// fp() quebra o encapsulamento — sem isso server.prisma fica undefined nas rotas
+export default fp(prismaPlugin)
