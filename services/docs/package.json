@@ -1,0 +1,34 @@
+{
+  "name": "@felipe/docs",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "migrate": "prisma migrate deploy",
+    "generate": "prisma generate"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.25.0",
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@aws-sdk/s3-request-presigner": "^3.600.0",
+    "@fastify/cors": "^9.0.1",
+    "@fastify/jwt": "^8.0.1",
+    "@fastify/multipart": "^8.3.0",
+    "@prisma/client": "^5.14.0",
+    "fastify": "^4.28.1",
+    "fastify-plugin": "^4.5.1",
+    "mammoth": "^1.7.1",
+    "pdf-parse": "^1.1.1",
+    "uuid": "^10.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/uuid": "^10.0.0",
+    "prisma": "^5.14.0",
+    "tsx": "^4.15.7",
+    "typescript": "^5.4.5"
+  }
+}

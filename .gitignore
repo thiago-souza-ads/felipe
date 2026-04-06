@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.next/
+.DS_Store
+prisma/migrations/
+coverage/

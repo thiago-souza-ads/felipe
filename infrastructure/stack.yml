@@ -1,0 +1,162 @@
+version: '3.8'
+
+networks:
+  network_public:
+    external: true
+  network_internal:
+    driver: overlay
+    internal: true
+
+volumes:
+  postgres_data:
+  minio_data:
+
+x-logging: &default-logging
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: felipe
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: felipe
+      POSTGRES_MULTIPLE_DATABASES: felipe_auth,felipe_users,felipe_docs
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
+    networks:
+      - network_internal
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    logging: *default-logging
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    networks:
+      - network_internal
+      - network_public
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.felipe-minio-console.rule=Host(`minio.felipe.nextagent.com.br`)"
+        - "traefik.http.routers.felipe-minio-console.entrypoints=websecure"
+        - "traefik.http.routers.felipe-minio-console.tls=true"
+        - "traefik.http.routers.felipe-minio-console.tls.certresolver=letsencrypt"
+        - "traefik.http.services.felipe-minio-console.loadbalancer.server.port=9001"
+    logging: *default-logging
+
+  auth:
+    image: ${REGISTRY:-ghcr.io}/thiago-souza-ads/felipe-auth:latest
+    environment:
+      DATABASE_URL: postgresql://felipe:${POSTGRES_PASSWORD}@postgres:5432/felipe_auth
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: "15m"
+      PORT: "3001"
+      NODE_ENV: production
+    networks:
+      - network_internal
+      - network_public
+    depends_on:
+      - postgres
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.felipe-auth.rule=Host(`felipe.nextagent.com.br`) && PathPrefix(`/api/auth`)"
+        - "traefik.http.routers.felipe-auth.entrypoints=websecure"
+        - "traefik.http.routers.felipe-auth.tls=true"
+        - "traefik.http.routers.felipe-auth.tls.certresolver=letsencrypt"
+        - "traefik.http.services.felipe-auth.loadbalancer.server.port=3001"
+    logging: *default-logging
+
+  users:
+    image: ${REGISTRY:-ghcr.io}/thiago-souza-ads/felipe-users:latest
+    environment:
+      DATABASE_URL: postgresql://felipe:${POSTGRES_PASSWORD}@postgres:5432/felipe_users
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: "3002"
+      NODE_ENV: production
+    networks:
+      - network_internal
+      - network_public
+    depends_on:
+      - postgres
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.felipe-users.rule=Host(`felipe.nextagent.com.br`) && PathPrefix(`/api/users`)"
+        - "traefik.http.routers.felipe-users.entrypoints=websecure"
+        - "traefik.http.routers.felipe-users.tls=true"
+        - "traefik.http.routers.felipe-users.tls.certresolver=letsencrypt"
+        - "traefik.http.services.felipe-users.loadbalancer.server.port=3002"
+    logging: *default-logging
+
+  docs:
+    image: ${REGISTRY:-ghcr.io}/thiago-souza-ads/felipe-docs:latest
+    environment:
+      DATABASE_URL: postgresql://felipe:${POSTGRES_PASSWORD}@postgres:5432/felipe_docs
+      JWT_SECRET: ${JWT_SECRET}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: felipe-docs
+      PORT: "3003"
+      NODE_ENV: production
+    networks:
+      - network_internal
+      - network_public
+    depends_on:
+      - postgres
+      - minio
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.felipe-docs.rule=Host(`felipe.nextagent.com.br`) && PathPrefix(`/api/docs`)"
+        - "traefik.http.routers.felipe-docs.entrypoints=websecure"
+        - "traefik.http.routers.felipe-docs.tls=true"
+        - "traefik.http.routers.felipe-docs.tls.certresolver=letsencrypt"
+        - "traefik.http.services.felipe-docs.loadbalancer.server.port=3003"
+    logging: *default-logging
+
+  frontend:
+    image: ${REGISTRY:-ghcr.io}/thiago-souza-ads/felipe-frontend:latest
+    environment:
+      NEXT_PUBLIC_API_URL: https://felipe.nextagent.com.br
+      NODE_ENV: production
+    networks:
+      - network_public
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.felipe-frontend.rule=Host(`felipe.nextagent.com.br`)"
+        - "traefik.http.routers.felipe-frontend.entrypoints=websecure"
+        - "traefik.http.routers.felipe-frontend.tls=true"
+        - "traefik.http.routers.felipe-frontend.tls.certresolver=letsencrypt"
+        - "traefik.http.services.felipe-frontend.loadbalancer.server.port=3000"
+    logging: *default-logging
