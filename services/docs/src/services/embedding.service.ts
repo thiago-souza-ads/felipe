@@ -112,7 +112,7 @@ export class EmbeddingService {
         const embeddingStr = `[${embedding.join(',')}]`
 
         await this.prisma.$executeRaw`
-          INSERT INTO document_chunks (id, document_id, content, embedding, chunk_index, created_at)
+          INSERT INTO document_chunks (id, "documentId", content, embedding, "chunkIndex", "createdAt")
           VALUES (gen_random_uuid(), ${documentId}, ${chunks[i]}, ${embeddingStr}::vector, ${i}, NOW())
         `
       }

@@ -25,20 +25,20 @@ export class RagService {
       if (!doc) throw new Error('Document not found')
 
       chunks = await this.prisma.$queryRaw`
-        SELECT dc.content, dc.document_id, 1 - (dc.embedding <=> ${embeddingStr}::vector) as similarity
+        SELECT dc.content, dc."documentId" as document_id, 1 - (dc.embedding <=> ${embeddingStr}::vector) as similarity
         FROM document_chunks dc
-        JOIN documents d ON d.id = dc.document_id
-        WHERE d.user_id = ${userId} AND dc.document_id = ${documentId}
+        JOIN documents d ON d.id = dc."documentId"
+        WHERE d."userId" = ${userId} AND dc."documentId" = ${documentId}
         ORDER BY dc.embedding <=> ${embeddingStr}::vector
         LIMIT 5
       `
     } else {
       // Search across all user documents
       chunks = await this.prisma.$queryRaw`
-        SELECT dc.content, dc.document_id, 1 - (dc.embedding <=> ${embeddingStr}::vector) as similarity
+        SELECT dc.content, dc."documentId" as document_id, 1 - (dc.embedding <=> ${embeddingStr}::vector) as similarity
         FROM document_chunks dc
-        JOIN documents d ON d.id = dc.document_id
-        WHERE d.user_id = ${userId} AND d.status = 'READY'
+        JOIN documents d ON d.id = dc."documentId"
+        WHERE d."userId" = ${userId} AND d.status = 'READY'
         ORDER BY dc.embedding <=> ${embeddingStr}::vector
         LIMIT 8
       `
