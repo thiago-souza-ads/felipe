@@ -78,14 +78,19 @@ jobs:
           script: |
             mkdir -p /opt/stacks/felipe && cd /opt/stacks/felipe
 
-            cat > .env <<ENVEOF
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
-            MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}
-            MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}
-            REGISTRY=ghcr.io
-            ENVEOF
+            cat > .env <<'ENVEOF'
+POSTGRES_PASSWORD=REPLACE_POSTGRES
+JWT_SECRET=REPLACE_JWT
+ANTHROPIC_API_KEY=REPLACE_ANTHROPIC
+MINIO_ACCESS_KEY=REPLACE_MINIO_KEY
+MINIO_SECRET_KEY=REPLACE_MINIO_SECRET
+REGISTRY=ghcr.io
+ENVEOF
+            sed -i "s|REPLACE_POSTGRES|${{ secrets.POSTGRES_PASSWORD }}|g" .env
+            sed -i "s|REPLACE_JWT|${{ secrets.JWT_SECRET }}|g" .env
+            sed -i "s|REPLACE_ANTHROPIC|${{ secrets.ANTHROPIC_API_KEY }}|g" .env
+            sed -i "s|REPLACE_MINIO_KEY|${{ secrets.MINIO_ACCESS_KEY }}|g" .env
+            sed -i "s|REPLACE_MINIO_SECRET|${{ secrets.MINIO_SECRET_KEY }}|g" .env
 
             curl -sH "Authorization: token ${{ secrets.GH_TOKEN }}" \
               -H "Accept: application/vnd.github.v3.raw" \
@@ -106,5 +111,5 @@ jobs:
             docker pull ghcr.io/thiago-souza-ads/felipe-docs:latest
             docker pull ghcr.io/thiago-souza-ads/felipe-frontend:latest
 
-            docker stack deploy -c stack.yml --with-registry-auth felipe
+            export $(cat .env | xargs) && docker stack deploy -c stack.yml --with-registry-auth felipe
             echo "Deploy concluido!"
