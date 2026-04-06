@@ -78,6 +78,7 @@ services:
         condition: on-failure
       labels:
         - "traefik.enable=true"
+        - "traefik.docker.network=network_public"
         - "traefik.http.routers.felipe-auth.rule=Host(`felipe.nextagent.com.br`) && PathPrefix(`/api/auth`)"
         - "traefik.http.routers.felipe-auth.entrypoints=websecure"
         - "traefik.http.routers.felipe-auth.tls=true"
@@ -103,6 +104,7 @@ services:
         condition: on-failure
       labels:
         - "traefik.enable=true"
+        - "traefik.docker.network=network_public"
         - "traefik.http.routers.felipe-users.rule=Host(`felipe.nextagent.com.br`) && PathPrefix(`/api/users`)"
         - "traefik.http.routers.felipe-users.entrypoints=websecure"
         - "traefik.http.routers.felipe-users.tls=true"
@@ -134,6 +136,7 @@ services:
         condition: on-failure
       labels:
         - "traefik.enable=true"
+        - "traefik.docker.network=network_public"
         - "traefik.http.routers.felipe-docs.rule=Host(`felipe.nextagent.com.br`) && PathPrefix(`/api/docs`)"
         - "traefik.http.routers.felipe-docs.entrypoints=websecure"
         - "traefik.http.routers.felipe-docs.tls=true"
@@ -154,6 +157,7 @@ services:
         condition: on-failure
       labels:
         - "traefik.enable=true"
+        - "traefik.docker.network=network_public"
         - "traefik.http.routers.felipe-frontend.rule=Host(`felipe.nextagent.com.br`)"
         - "traefik.http.routers.felipe-frontend.entrypoints=websecure"
         - "traefik.http.routers.felipe-frontend.tls=true"

@@ -10,6 +10,13 @@ async function bootstrap() {
   await server.register(cors, { origin: true })
   await server.register(jwt, { secret: process.env.JWT_SECRET || 'changeme-secret' })
   await server.register(prismaPlugin)
+  server.addContentTypeParser('application/json', { parseAs: 'string' }, function (req, body, done) {
+    try {
+      done(null, JSON.parse(body as string))
+    } catch (err) {
+      done(err as Error, undefined)
+    }
+  })
   await server.register(authRoutes, { prefix: '/api/auth' })
 
   server.get('/health', async () => ({ status: 'ok', service: 'auth' }))

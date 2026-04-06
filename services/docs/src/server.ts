@@ -26,6 +26,9 @@ async function bootstrap() {
     s.addHook('onClose', async (i: FastifyInstance) => { await i.prisma.$disconnect() })
   }))
 
+  server.addContentTypeParser('application/json', { parseAs: 'string' }, function (req, body, done) {
+    try { done(null, JSON.parse(body as string)) } catch (err) { done(err as Error, undefined) }
+  })
   await server.register(docsRoutes, { prefix: '/api/docs' })
   server.get('/health', async () => ({ status: 'ok', service: 'docs' }))
 
