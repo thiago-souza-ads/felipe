@@ -16,7 +16,8 @@
     "@prisma/client": "^5.14.0",
     "bcryptjs": "^2.4.3",
     "fastify": "^4.28.1",
-    "uuid": "^10.0.0"
+    "uuid": "^10.0.0",
+    "fastify-plugin": "^4.5.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

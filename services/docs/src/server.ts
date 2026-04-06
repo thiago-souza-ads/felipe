@@ -1,10 +1,16 @@
-import Fastify from 'fastify'
+import Fastify, { FastifyInstance } from 'fastify'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import multipart from '@fastify/multipart'
 import fp from 'fastify-plugin'
 import { PrismaClient } from '@prisma/client'
 import { docsRoutes } from './routes/docs.routes.js'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    prisma: PrismaClient
+  }
+}
 
 const server = Fastify({ logger: true })
 
@@ -17,7 +23,7 @@ async function bootstrap() {
     const prisma = new PrismaClient()
     await prisma.$connect()
     s.decorate('prisma', prisma)
-    s.addHook('onClose', async (i) => { await (i as any).prisma.$disconnect() })
+    s.addHook('onClose', async (i: FastifyInstance) => { await i.prisma.$disconnect() })
   }))
 
   await server.register(docsRoutes, { prefix: '/api/docs' })
